@@ -18,6 +18,7 @@ class forumReader(object):
 
     user_agent = 'Mozilla/5.0 (X11; Linux x86_64; rv:14.0) Gecko/20100101 Firefox/14.0.1'
     view_topic = "viewtopic.php?f=%i&t=%i"
+    view_post = "viewtopic.php?p=%i"
     
     def __init__(self, host):
         self.host = host
@@ -85,20 +86,48 @@ class forumReader(object):
         soup = self._get_html(url)
         page = soup.find_all("table","tablebg")
         output = {}
-        for x, row in enumerate(page):
+        for post in page:
+
+            postID = ""
+            if post.find("td","gensmall"):
+                postID = re.search("(?<=p=)\d*",post.find("td","gensmall").find("a").get("href")).group(0)
 
             author = ""
-            text = row.find("b", "postauthor")
-            if text:
-                author = text.get_text()
+            if post.find("b", "postauthor"):
+                author = post.find("b", "postauthor").get_text
 
             postbody = ""
-            text = row.find("div", "postbody")
-            if text:
-                postbody = text.get_text()
+            if post.find("div", "postbody"):
+                postbody = post.find("div", "postbody", recursive=False).get_text()
 
-            if author and postbody:
-                posts.append(forumPost(x,author,postbody))
+            if author and postbody and postID:
+                posts.append(forumPost(postID,author,postbody))
                              
         return posts
-        
+
+    def getPost(self, req_postID):
+        url = urljoin(self.host,self.view_post %(req_postID) )
+            
+        soup = self._get_html(url)
+        page = soup.find_all("table","tablebg")
+        output = {}
+        for post in page:
+
+            postID = ""
+            if post.find("td","gensmall"):
+                postID = re.search("(?<=p=)\d*",post.find("td","gensmall").find("a").get("href")).group(0)
+                if int(postID)!=req_postID:
+                    continue
+
+            author = ""
+            if post.find("b", "postauthor"):
+                author = post.find("b", "postauthor").get_text()
+
+            postbody = ""
+            if post.find("div", "postbody"):
+                postbody = post.find("div", "postbody", recursive=False).get_text()
+
+            if author and postbody and postID:
+                return forumPost(postID,author,postbody)
+                             
+        return ""
