@@ -2,6 +2,9 @@ import http.cookiejar
 import configparser
 import sys
 import re
+import codecs
+from time import sleep
+from io import BytesIO
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urlencode, urljoin
 from urllib.request import build_opener, install_opener
@@ -19,6 +22,9 @@ class forumReader(object):
     user_agent = 'Mozilla/5.0 (X11; Linux x86_64; rv:14.0) Gecko/20100101 Firefox/14.0.1'
     view_topic = "/viewtopic.php?f=%i&t=%i"
     view_post = "/viewtopic.php?p=%i"
+    edit_url = '/posting.php?mode=edit&f=%i&p=%i'
+
+    edit_form_id = 'postform'
     
     def __init__(self, host):
         self.host = host
@@ -54,7 +60,54 @@ class forumReader(object):
         soup = BeautifulSoup(resp)
         self.opener.close()
         return soup
-    
+
+    def _get_form(self, url, form_id):
+        form = self._get_html(url).find("form")
+        return self._get_form_values(form)
+
+    def _get_form_values(self, soup):
+
+        inputs = soup.find_all("input")
+        values = {}
+        for input in inputs:
+            if input.get('type') == 'submit' or not input.get('name') or not input.get('value'):
+                continue
+            values[input['name']] = input['value']
+        return {'values': values, 'action': soup['action']}
+
+    def _encode_multipart_formdata(self, fields, boundary=None):
+        writer = codecs.lookup('utf-8')[3]
+        body = BytesIO()
+
+        if boundary is None:
+            boundary = '----------b0uNd@ry_$'
+
+        for name, value in getattr(fields, 'items')():
+            body.write(bytes('--%s\r\n' % boundary, 'utf-8'))
+            if isinstance(value, tuple):
+                file, data = value
+                writer(body).write('Content-Disposition: form-data; name="%s"; filename="%s"\r\n' % (name, file))
+                body.write(bytes('Content-Type: %s\r\n\r\n' % (self._get_content_type(file)), 'utf-8'))
+            else:
+                data = value
+                writer(body).write('Content-Disposition: form-data; name="%s"\r\n' % (name))
+                body.write(bytes('Content-Type: text/plain\r\n\r\n', 'utf-8'))
+
+            if isinstance(data, int):
+                data = str(data)
+
+            if isinstance(data, str):
+                writer(body).write(data)
+            else:
+                body.write(data)
+
+            body.write(bytes('\r\n', 'utf-8'))
+
+        body.write(bytes('--%s--\r\n' % (boundary), 'utf-8'))
+
+        content_type = 'multipart/form-data; boundary=%s' % boundary
+        return body.getvalue(), content_type
+
     def login(self, username, password):
         if not self.isLogged():
             self.opener.open("https://secure.spyparty.com/beta/forums/")
@@ -133,3 +186,19 @@ class forumReader(object):
                 return forumPost(postID,author,postbody)
                              
         return ""
+
+    def editPost(self, forum, post, message):
+        url = self.host + (self.edit_url % (forum, post))
+        try:
+            form = self._get_form(url, self.edit_form_id)
+            form['values']['message'] = message
+            form['values']['post'] = 'Submit'
+            body, content_type = self._encode_multipart_formdata(form['values'])
+            headers = {'Content-Type': content_type}
+
+            """ wait at least 2 seconds so phpBB let us post """
+            sleep(2)
+            html = self._send_query(url, body, headers, encode=False)
+            soup = BeautifulSoup(BytesIO(html))
+        except HTTPError as e:
+            print('\n>>> Error %i: %s' % (e.code, e.msg))
