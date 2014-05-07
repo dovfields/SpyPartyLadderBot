@@ -135,7 +135,6 @@ class forumReader(object):
         url = self.host + (self.view_topic %(forumID, topicID) )
         if start:
             url += ("&start=%i" % start)
-            
         soup = self._get_html(url)
         page = soup.find_all("table","tablebg")
         for post in page:
@@ -202,3 +201,8 @@ class forumReader(object):
             soup = BeautifulSoup(BytesIO(html))
         except HTTPError as e:
             print('\n>>> Error %i: %s' % (e.code, e.msg))
+
+    def strTagSurround(text, tags):
+        for tag in tags:
+            text = "["+tag+"]"+text+"[/"+tag+"]"
+        return text
