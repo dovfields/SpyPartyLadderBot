@@ -17,7 +17,7 @@ class forumPost:
       self.user = user
       self.postbody = postbody
 
-class forumReader(object):
+class forumreader(object):
 
     user_agent = 'Mozilla/5.0 (X11; Linux x86_64; rv:14.0) Gecko/20100101 Firefox/14.0.1'
     view_topic = "/viewtopic.php?f=%i&t=%i"
@@ -130,11 +130,16 @@ class forumReader(object):
                     return True
         return False
 
-    def getPosts(self, forumID, topicID, start=None, ignoredPosts=None):
+    def getPosts(self, forumID=None, topicID=None, start=None, startPost=None):
+        print(forumID, topicID, start, startPost)
         posts = []
-        url = self.host + (self.view_topic %(forumID, topicID) )
-        if start:
-            url += ("&start=%i" % start)
+        if startPost:
+            url = self.host + (self.view_post %(startPost) )
+        else:
+            url = self.host + (self.view_topic %(forumID, topicID) )
+            if start:
+                url += ("&start=%i" % start)
+                
         soup = self._get_html(url)
         page = soup.find_all("table","tablebg")
         for post in page:
@@ -142,7 +147,9 @@ class forumReader(object):
             postID = ""
             if post.find("td","gensmall"):
                 postID = re.search("(?<=p=)\d*",post.find("td","gensmall").find("a").get("href")).group(0)
-
+                if startPost and int(postID) < startPost:
+                    continue
+                    
             author = ""
             if post.find("b", "postauthor"):
                 author = post.find("b", "postauthor").get_text()
@@ -150,12 +157,21 @@ class forumReader(object):
             postbody = []
             if post.find("div", "postbody"):
                 for content in post.find("div", "postbody").contents:
-                    if content.name is None:
                         postbody.append(content.string)
                         
             if author and postbody and postID:
                 posts.append(forumPost(postID,author,postbody))
-                             
+
+        #Check for next page links
+        links = soup.find_all("a", href=re.compile("^\./viewtopic"))
+        for link in links:
+            if link.text == "Next":
+                forumID = int(re.search("(?<=f=)\d+",link.get("href")).group(0))
+                topicID = int(re.search("(?<=t=)\d+",link.get("href")).group(0))
+                start = int(re.search("(?<=start=)\d+",link.get("href")).group(0))
+                posts = posts + self.getPosts(forumID, topicID, start)
+                break
+                
         return posts
 
     def getPost(self, req_postID):
@@ -183,8 +199,6 @@ class forumReader(object):
 
             if author and postbody and postID:
                 return forumPost(postID,author,postbody)
-                             
-        return ""
 
     def editPost(self, forum, post, message):
         url = self.host + (self.edit_url % (forum, post))
