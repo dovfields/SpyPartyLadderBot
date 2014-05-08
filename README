@@ -1,1 +1,5 @@
-A bot designed to automate the SpyParty League currently run using the SpyParty forums (phpBB3).
+A bot designed to automate the SpyParty Ladder currently run using the SpyParty forums (phpBB3).
+
+Dependencies:
+python-phpbb3
+PrettyTable
