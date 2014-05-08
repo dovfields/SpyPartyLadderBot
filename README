@@ -1,5 +1,7 @@
 A bot designed to automate the SpyParty Ladder currently run using the SpyParty forums (phpBB3).
 
 Dependencies:
-python-phpbb3
 PrettyTable
+
+Code taken and modified from:
+python-phpbb3
