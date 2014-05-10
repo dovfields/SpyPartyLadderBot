@@ -5,7 +5,7 @@ import re
 import codecs
 from time import sleep
 from io import BytesIO
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, element
 from urllib.parse import urlparse, urlencode, urljoin
 from urllib.request import build_opener, install_opener
 from urllib.request import Request, HTTPCookieProcessor
@@ -157,7 +157,13 @@ class forumreader(object):
             postbody = []
             if post.find("div", "postbody"):
                 for content in post.find("div", "postbody").contents:
-                        postbody.append(content.string)
+                    if isinstance(content, element.Tag):
+                        if content.get("class") and content.get("class")[0] == "postlink":
+                            link = content.get("href")
+                            link = link.replace("http://", "", 1)
+                            link = link.replace("%20", " ")
+                            postbody.append(link)
+                    postbody.append(content.string)
                         
             if author and postbody and postID:
                 posts.append(forumPost(postID,author,postbody))

@@ -1,7 +1,13 @@
 from ForumReader import forumreader
-import Ladder
+from Ladder import ladder
 import configparser
 import sys
+from datetime import datetime
+
+class command():
+    def __init__(self, user, arguments):
+      self.user = user
+      self.arguments = arguments
 
 def main():
     #Read Config file
@@ -13,16 +19,51 @@ def main():
     #Login
     red = forumreader(config["Forum"]["host"])
     red.login(config["User"]["username"],config["User"]["password"])    
+    print(red.isLogged())
+    
+    #Open saved Ladder
+    lad = ladder(config["Data"]["ladderfile"],config["Data"]["challengesfile"])
 
-    #Get Posts
+    #Get Commands
     posts = red.getPosts(startPost=int(config["Forum"]["currentpost"]))
-
     commands = []
     for post in posts:
         for line in post.postbody:
             if line:
                 if line.split(" ",1)[0].lower() == "ladderbot":
-                    commands.append([post.user,line.split(" ",1)[1].lower()])
+                    try:
+                        comargs = line.split(" ",1)[1].split(" ")
+                    except IndexError:
+                        print("No arguments found")
+                        continue
+
+                    comargs[:] = [comarg.lower() for comarg in comargs]
+                    commands.append(command(post.user,comargs))
+
+    
+    for com in commands:
+        print(com.user, com.arguments)
+        if com.arguments[0] == "join":
+            lad.addMember(com.user)
+        if com.arguments[0] == "challenge":
+            try:
+                lad.addChallenge(com.user,com.arguments[1],datetime.today())
+            except IndexError:
+                print("Challenge Error - No defender argument")
+                continue
+        if com.arguments[0] == "post":
+            try:
+                result = com.arguments[1]
+            except IndexError:
+                print("Post Error - No result argument")
+                continue
+            if result == "win":
+                lad.addWin(com.user, True)
+            elif result == "loss":
+                lad.addWin(com.user, False)
+
+
+    print(lad)
 
 if __name__ == "__main__":
     main()
