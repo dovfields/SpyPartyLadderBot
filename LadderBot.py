@@ -11,6 +11,7 @@ class command():
 
 def main():
     update = False
+    print(datetime.now())
     #Read Config file
     config = configparser.ConfigParser()
     #Debug - To be removed - Allows the code to be run outside the command line
@@ -78,9 +79,10 @@ def main():
 
     #Save the data
     #Get the last post we read
-    config["Forum"]["currentpost"] = posts[-1].postID
-    with open('config.ini', 'w') as configfile:
-        config.write(configfile)
+    if posts:
+        config["Forum"]["currentpost"] = posts[-1].postID
+        with open('config.ini', 'w') as configfile:
+            config.write(configfile)
 
     lad.saveData()
 

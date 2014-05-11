@@ -60,7 +60,7 @@ class ladder(object):
                 try:
                     for row in reader:
                         print(row)
-                        self.members[row[0]] = member(*row)
+                        self.members[row[0].lower()] = member(*row)
                 except csv.Error as e:
                     sys.exit('file %s, line %d: %s' % (file, reader.line_num, e))
         except FileNotFoundError:
@@ -72,7 +72,6 @@ class ladder(object):
                 reader = csv.reader(f)
                 try:
                     for row in reader:
-                        print(row)
                         self.challenges.append(challenge(*row))
                 except csv.Error as e:
                     sys.exit('file %s, line %d: %s' % (file, reader.line_num, e))
@@ -143,6 +142,8 @@ class ladder(object):
             #Swap positions
             mem_user.position,mem_versus.position = mem_versus.position,mem_user.position
             mem_user.rating,mem_versus.rating = glick.rate_1vs1(mem_user.rating,mem_versus.rating)
+        else:
+            mem_versus.rating,mem_user.rating = glick.rate_1vs1(mem_versus.rating,mem_user.rating)
     
     def __str__(self):
         x = PrettyTable(member.writeOutput())
