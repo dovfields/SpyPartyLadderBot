@@ -147,7 +147,7 @@ class forumreader(object):
             postID = ""
             if post.find("td","gensmall"):
                 postID = re.search("(?<=p=)\d*",post.find("td","gensmall").find("a").get("href")).group(0)
-                if startPost and int(postID) < startPost:
+                if startPost and int(postID) <= startPost:
                     continue
                     
             author = ""
@@ -156,14 +156,23 @@ class forumreader(object):
 
             postbody = []
             if post.find("div", "postbody"):
-                for content in post.find("div", "postbody").contents:
+                for content in post.find("div", "postbody").contents:                    
                     if isinstance(content, element.Tag):
+                        #Spoiler tags
+                        if content.find("div", "alt2"):
+                            for spoiler in content.find("div", "alt2").div:
+                                if spoiler.string:
+                                    postbody.append(spoiler.string.strip("\n"))
+                                                            
+                        #Text in HTTP links
                         if content.get("class") and content.get("class")[0] == "postlink":
                             link = content.get("href")
                             link = link.replace("http://", "", 1)
                             link = link.replace("%20", " ")
                             postbody.append(link)
-                    postbody.append(content.string)
+                            
+                    if content.string:        
+                        postbody.append(content.string)
                         
             if author and postbody and postID:
                 posts.append(forumPost(postID,author,postbody))
