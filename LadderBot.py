@@ -3,6 +3,7 @@ from Ladder import ladder
 import configparser
 import sys
 from datetime import datetime
+from collections import deque
 
 class command():
     def __init__(self, user, arguments):
@@ -21,7 +22,6 @@ def main():
     #Login
     red = forumreader(config["Forum"]["host"])
     red.login(config["User"]["username"],config["User"]["password"])    
-    print(red.isLogged())
     
     #Open saved Ladder
     lad = ladder(config["Data"]["ladderfile"],config["Data"]["challengesfile"])
@@ -49,13 +49,13 @@ def main():
         if com.arguments[0] == "join":
             lad.addMember(com.user)
             update = True
-        if com.arguments[0] == "challenge":
+        elif com.arguments[0] == "challenge":
             try:
                 lad.addChallenge(com.user,com.arguments[1],datetime.today())
             except IndexError:
                 print("Challenge Error - No defender argument")
                 continue
-        if com.arguments[0] == "post":
+        elif com.arguments[0] == "post":
             try:
                 result = com.arguments[1]
             except IndexError:
@@ -75,6 +75,7 @@ def main():
 
     #Edit the post
     if update:
+        print(datetime.now())
         red.editPost(int(config["Forum"]["resultsforum"]), int(config["Forum"]["resultspost"]), forumreader.strTagSurround(str(lad),("code","center")))
 
     #Save the data

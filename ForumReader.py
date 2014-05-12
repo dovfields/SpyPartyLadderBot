@@ -131,7 +131,6 @@ class forumreader(object):
         return False
 
     def getPosts(self, forumID=None, topicID=None, start=None, startPost=None):
-        print(forumID, topicID, start, startPost)
         posts = []
         if startPost:
             url = self.host + (self.view_post %(startPost) )

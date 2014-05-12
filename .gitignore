@@ -217,3 +217,8 @@ pip-log.txt
 config.ini
 output.txt
 run.bat
+<<<<<<< HEAD
+LadderBot.sh
+something.out
+=======
+>>>>>>> 517f9dae5bae94ffde926b2c325671b35a881500

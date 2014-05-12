@@ -59,7 +59,10 @@ class ladder(object):
                 reader = csv.reader(f)
                 try:
                     for row in reader:
+<<<<<<< HEAD
+=======
                         print(row)
+>>>>>>> 517f9dae5bae94ffde926b2c325671b35a881500
                         self.members[row[0].lower()] = member(*row)
                 except csv.Error as e:
                     sys.exit('file %s, line %d: %s' % (file, reader.line_num, e))
@@ -92,8 +95,7 @@ class ladder(object):
     def addMember(self, name):
         #Check if the member already exists
         if name in self.members:
-            print("Can't add - "+name+" already in ladder")
-            return False
+            return str("Can't add - "+name+" already in ladder")
         
         toadd = member(name)
         if not self.members:
@@ -131,16 +133,21 @@ class ladder(object):
         try:
             mem_user = self.members[user]
         except KeyError:
-            return print("Can't post - "+user+" not in ladder")
+            return str("Can't post - "+user+" not in ladder")
         try:
             mem_versus = self.members[versus]
         except KeyError:
-            return print("Can't post - "+versus+" not in ladder")
+            return str("Can't post - "+versus+" not in ladder")
+
+        if mem_user == mem_versus:
+            return str("Can't post - "+user+" & "+versus+" are same person")
         
-        if result:
-            glick = Glicko2()
+        glick = Glicko2() 
+        if result:    
             #Swap positions
-            mem_user.position,mem_versus.position = mem_versus.position,mem_user.position
+            if mem_user.position>mem_versus.position:
+                mem_user.position,mem_versus.position = mem_versus.position,mem_user.position
+                
             mem_user.rating,mem_versus.rating = glick.rate_1vs1(mem_user.rating,mem_versus.rating)
         else:
             mem_versus.rating,mem_user.rating = glick.rate_1vs1(mem_versus.rating,mem_user.rating)
