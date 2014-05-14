@@ -63,7 +63,7 @@ def main():
     for line in lines:
         args = line.split(",",1)
         print(args)
-        commanddeque.append(command(*args))
+        commanddeque.append(commandlog(*args))
 
     #Read in recent errors
     with open("errors.txt") as f:
