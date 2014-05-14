@@ -1,15 +1,15 @@
 import http.cookiejar
-import configparser
-import sys
 import re
 import codecs
 from time import sleep
 from io import BytesIO
-from bs4 import BeautifulSoup, element
-from urllib.parse import urlparse, urlencode, urljoin
+from urllib.parse import urlencode
 from urllib.request import build_opener, install_opener
 from urllib.request import Request, HTTPCookieProcessor
 from urllib.error import HTTPError
+
+from bs4 import BeautifulSoup, element
+
 
 class forumPost:
     def __init__(self, postID, user, postbody):
@@ -53,8 +53,7 @@ class forumreader(object):
         return html
     
     def _get_html(self, url):
-        headers = {}
-        headers['User-Agent'] = self.user_agent
+        headers = {'User-Agent': self.user_agent}
         request = Request(url, headers=headers)
         resp = self.opener.open(request)
         soup = BeautifulSoup(resp)
@@ -90,7 +89,7 @@ class forumreader(object):
                 body.write(bytes('Content-Type: %s\r\n\r\n' % (self._get_content_type(file)), 'utf-8'))
             else:
                 data = value
-                writer(body).write('Content-Disposition: form-data; name="%s"\r\n' % (name))
+                writer(body).write('Content-Disposition: form-data; name="%s"\r\n' % name)
                 body.write(bytes('Content-Type: text/plain\r\n\r\n', 'utf-8'))
 
             if isinstance(data, int):
@@ -103,7 +102,7 @@ class forumreader(object):
 
             body.write(bytes('\r\n', 'utf-8'))
 
-        body.write(bytes('--%s--\r\n' % (boundary), 'utf-8'))
+        body.write(bytes('--%s--\r\n' % boundary, 'utf-8'))
 
         content_type = 'multipart/form-data; boundary=%s' % boundary
         return body.getvalue(), content_type
@@ -111,20 +110,15 @@ class forumreader(object):
     def login(self, username, password):
         if not self.isLogged():
             self.opener.open("https://secure.spyparty.com/beta/forums/")
-            form = {}
-            form['login'] = username
-            form['password'] = password
-            form['doLogin'] = "Log in"
-            form['ref'] = "https://secure.spyparty.com/beta/forums"
-            form['required'] = ""
-            form['service'] = "cosign-beta"
+            form = {'login': username, 'password': password, 'doLogin': "Log in",
+                    'ref': "https://secure.spyparty.com/beta/forums", 'required': "", 'service': "cosign-beta"}
             self._send_query("https://secure.spyparty.com/cosign-bin/cosign.cgi", form)
             return self.isLogged()
         else:
             return True
         
     def isLogged(self):
-        if self.jar != None:
+        if self.jar is not None:
             for cookie in self.jar:
                 if re.search('phpbb3_.*_u', cookie.name) and cookie.value:
                     return True
@@ -133,7 +127,7 @@ class forumreader(object):
     def getPosts(self, forumID=None, topicID=None, start=None, startPost=None):
         posts = []
         if startPost:
-            url = self.host + (self.view_post %(startPost) )
+            url = self.host + (self.view_post % startPost )
         else:
             url = self.host + (self.view_topic %(forumID, topicID) )
             if start:
@@ -169,7 +163,10 @@ class forumreader(object):
                             link = link.replace("http://", "", 1)
                             link = link.replace("%20", " ")
                             postbody.append(link)
-                            
+
+                        if content.get("class") and (content.get("class")[0] == "quotecontent" or content.get("class")[0] == "quotetitle"):
+                            continue
+
                     if content.string:        
                         postbody.append(content.string)
                         
@@ -189,7 +186,7 @@ class forumreader(object):
         return posts
 
     def getPost(self, req_postID):
-        url = self.host + (self.view_post %(req_postID) )
+        url = self.host + (self.view_post % req_postID )
             
         soup = self._get_html(url)
         page = soup.find_all("table","tablebg")
@@ -230,6 +227,7 @@ class forumreader(object):
         except HTTPError as e:
             print('\n>>> Error %i: %s' % (e.code, e.msg))
 
+    @staticmethod
     def strTagSurround(text, tags):
         for tag in tags:
             text = "["+tag+"]"+text+"[/"+tag+"]"

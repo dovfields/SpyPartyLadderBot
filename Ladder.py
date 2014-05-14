@@ -1,8 +1,9 @@
 import csv
 import sys
+
 from prettytable import PrettyTable
-from datetime import datetime
 from glicko2 import Rating, Glicko2
+
 
 class member:
     def __init__(self, name, position=0, defences=0, lastplayed="",mu=0,sigma=0,volativity=0):
@@ -31,19 +32,14 @@ class challenge:
       self.date = date
 
     def isInChallenge(self, member):
-        if member == member1 or member == member2:
+        if member == self.member1 or member == self.member2:
             return True
         else:
             return False
         
     def writeOutput(self):
         return self.member1.name,self.member2.name,str(self.date.strftime("%Y-%m-%d"))
-    
-    def writeOutput(self=None):
-        if not self:
-            return "Member1","Member2","Date"
-        return self.member1.name,self.member2.name,str(self.date.strftime("%Y-%m-%d"))
-    
+
 class ladder(object):
     def __init__(self,ladderfile, challengesfile):
         self.members = dict()
@@ -59,13 +55,9 @@ class ladder(object):
                 reader = csv.reader(f)
                 try:
                     for row in reader:
-<<<<<<< HEAD
-=======
-                        print(row)
->>>>>>> 517f9dae5bae94ffde926b2c325671b35a881500
                         self.members[row[0].lower()] = member(*row)
                 except csv.Error as e:
-                    sys.exit('file %s, line %d: %s' % (file, reader.line_num, e))
+                    sys.exit('file %s, line %d: %s' % (f, reader.line_num, e))
         except FileNotFoundError:
             print("No Ladder File Found")
 
@@ -77,7 +69,7 @@ class ladder(object):
                     for row in reader:
                         self.challenges.append(challenge(*row))
                 except csv.Error as e:
-                    sys.exit('file %s, line %d: %s' % (file, reader.line_num, e))
+                    sys.exit('file %s, line %d: %s' % (f, reader.line_num, e))
         except FileNotFoundError:
             print("No Challenges File Found")
                 
@@ -95,7 +87,7 @@ class ladder(object):
     def addMember(self, name):
         #Check if the member already exists
         if name in self.members:
-            return str("Can't add - "+name+" already in ladder")
+            return str("Can't join - "+name+" already in ladder")
         
         toadd = member(name)
         if not self.members:
@@ -116,18 +108,18 @@ class ladder(object):
             return print("Can't challenge - "+member1+" & "+member2+" are too separated")
         else:
             #Check if either party is already in a challenge.
-            for challenge in self.challenges:
-                if challenge.isInChallenge(member1):
+            for chall in self.challenges:
+                if chall.isInChallenge(member1):
                     #Member 1 is already in a challenge
                     #Assume they's the challenger and can cancel and re challenge?
                     print(member1+" in challenge")
-                if challenge.isInChallenge(member2):
+                if chall.isInChallenge(member2):
                     #Member 2 is already in a challenge
                     #Apply challenge rules
                     print(member2+" in challenge")
 
-            #If not add new challenge
-            self.challenges.append(challenge(self.members.get(member1),self.members.get(member2), date))
+                #If not add new challenge
+                self.challenges.append(challenge(self.members.get(member1),self.members.get(member2), date))
 
     def addWin(self, user, versus, result):
         try:
