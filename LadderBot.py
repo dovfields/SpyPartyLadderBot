@@ -142,6 +142,10 @@ def main():
                     raise InvalidCommand
                 else:
                     commanddeque.append(commandlog(time.time(),str(com)))
+            elif com.arguments[0] == "hiatus":
+                lad.setHiatus(com.user, True) #not sure if this needs a try/except since this can't called improperly?
+            elif com.arguments[0] == "unhiatus":
+                lad.setHiatus(com.user, False) #not sure if this needs a try/except since this can't called improperly?
             else:
                 error = com.arguments[0]+"- Unknown command"
                 raise InvalidCommand
